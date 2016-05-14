@@ -3,6 +3,7 @@ var express = require('express');
 var app = express();
 var ExpressPeerServer = require('peer').ExpressPeerServer;
 var port = process.env.PORT || 5000;
+var lodash = require('lodash');
 
 var server = http.createServer(app);
 
@@ -28,9 +29,10 @@ var connectedUsers = [];
 
 // peer js
 peerServer.on('connection', function (id) {
-  connectedUsers = connectedUsers.concat(id);
+  var userID = id + '-' + lodash.uniqueId();
+  connectedUsers = connectedUsers.concat(userID);
   io.emit(USERS_LIST_EVENT, connectedUsers);
-  console.log('User connected with #', id);
+  console.log('User connected with #', userID);
 });
 
 peerServer.on('disconnect', function (id) {
