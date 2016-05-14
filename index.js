@@ -1,28 +1,32 @@
-var ExpressPeerServer = require('peer').ExpressPeerServer,
-  express = require('express'),
-  app = express(),
-  server = require('http').createServer(app),
-  io = require('socket.io').listen(server),
+'use strict';
 
-  port = process.env.PORT || 3001;
+var PeerServer = require('peer').PeerServer;
+var express = require('express');
+var app = express();
+var port = process.env.PORT || 3001;
+
+app.get('/', function (req, res) {
+  res.send('Hello World!');
+});
+
+var expressServer = app.listen(port);
+var io = require('socket.io').listen(expressServer);
+
+console.log('Listening on port', port);
+
+var peerServer = new PeerServer({ port: 9000, path: '/chat' });
 
 var USERS_LIST_EVENT = 'USERS_LIST_EVENT';
 var connectedUsers = [];
 
-app.get('/', function(req, res, next) { res.send('Hello world!'); });
-
-app.use('/peerjs', ExpressPeerServer(server, {port: 9000}));
-
-server.on('connection', function (id) {
+peerServer.on('connection', function (id) {
   connectedUsers = connectedUsers.concat(id);
   io.emit(USERS_LIST_EVENT, connectedUsers);
   console.log('User connected with #', id);
 });
 
-server.on('disconnect', function (id) {
+peerServer.on('disconnect', function (id) {
   connectedUsers = connectedUsers.filter(_id => _id !== id);
   io.emit(USERS_LIST_EVENT, connectedUsers);
   console.log('User disconnected with #', id);
 });
-
-server.listen(port);
