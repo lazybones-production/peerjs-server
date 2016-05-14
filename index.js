@@ -1,24 +1,32 @@
-'use strict';
-
-var PeerServer = require('peer').PeerServer;
+var http = require('http');
 var express = require('express');
 var app = express();
-var port = process.env.PORT || 3001;
+var ExpressPeerServer = require('peer').ExpressPeerServer;
+var port = process.env.PORT || 5000;
+
+var server = http.createServer(app);
+
+var options = {
+    debug: true
+};
 
 app.get('/', function (req, res) {
   res.send('Hello World!');
 });
 
-var expressServer = app.listen(port);
-var io = require('socket.io').listen(expressServer);
+var peerServer = ExpressPeerServer(server, options);
+app.use('/peerjs', peerServer);
 
-console.log('Listening on port', port);
+var io = require('socket.io')(server);
 
-var peerServer = new PeerServer({ port: 9000, path: '/chat' });
+server.listen(port, function () {
+  console.log('server listen: ', port);
+});
 
 var USERS_LIST_EVENT = 'USERS_LIST_EVENT';
 var connectedUsers = [];
 
+// peer js
 peerServer.on('connection', function (id) {
   connectedUsers = connectedUsers.concat(id);
   io.emit(USERS_LIST_EVENT, connectedUsers);
